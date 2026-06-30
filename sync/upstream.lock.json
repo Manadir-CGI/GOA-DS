@@ -1,0 +1,33 @@
+{
+  "$comment": "Pinned upstream versions each GoA layer was last synced from. Every diff runs current-vs-this-pin, so syncs are reproducible and never compare against a moving target. The GitHub Action bumps these when a sync PR lands.",
+  "designTokens": {
+    "source": "npm",
+    "package": "@abgov/design-tokens",
+    "version": "RESOLVE-AT-CI",
+    "versionNote": "The design-tokens GitHub repo package.json is '0.0.0-development' (semantic-release stamps the real version only at npm publish). npm is the authoritative version source: the workflow records `npm view @abgov/design-tokens version` on each run.",
+    "artifact": "dist/tokens.css",
+    "appliedTo": "src/styles/goa-tokens.css",
+    "why": "npm tarball is the byte-identical published artifact this system imports verbatim; immutable per version, semver-signalled."
+  },
+  "uiComponents": {
+    "source": "github",
+    "repo": "GovAlta/ui-components",
+    "ref": "b1bca9900f5a",
+    "refNote": "Snapshot wired at the time this npm package was ported from the Claude Design canvas recreation. CI re-resolves the latest published release tag at run time.",
+    "apiDir": "docs/generated/component-apis",
+    "apiShape": "frameworks.react.props[].name  (confirmed against link-button.json)",
+    "keyField": "componentSlug (falls back to filename)",
+    "comparedTo": "src/components/**/*.tsx (export interface <Name>Props blocks)",
+    "why": "Only place with the machine-readable React prop table. Pin to a release tag, not main.",
+    "knownSplits": "Upstream is more granular than this system: file-upload-input + file-upload-card (vs GoabFileUpload), dropdown-item, menu-action, footer-nav-section + footer-meta-section, app-header-menu, circular-progress + linear-progress (vs GoabProgressIndicator, which exports GoabCircularProgress/GoabLinearProgress as named aliases). The diff reports these as unmatched on both sides by design — expected, not an error."
+  },
+  "figma": {
+    "source": "figma-api",
+    "file": "❖ Component library",
+    "fileKey": "TODO-figma-file-key",
+    "version": "TODO-file-version-id",
+    "role": "trigger-only",
+    "why": "Design files aren't mechanically diffable. On version/lastModified change, re-materialize icons/illustrations and re-run the visual fidelity audit — do not diff."
+  },
+  "lastSynced": "2026-06-30"
+}
