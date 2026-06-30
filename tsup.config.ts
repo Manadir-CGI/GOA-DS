@@ -1,0 +1,45 @@
+import { defineConfig } from "tsup";
+
+export default defineConfig([
+  {
+    name: "components",
+    entry: { index: "src/index.ts" },
+    format: ["esm", "cjs"],
+    dts: true,
+    sourcemap: true,
+    clean: true,
+    splitting: false,
+    treeshake: true,
+    external: ["react", "react-dom"],
+  },
+  {
+    name: "icons",
+    entry: { "icons/index": "src/icons/index.ts" },
+    format: ["esm", "cjs"],
+    dts: true,
+    sourcemap: true,
+    splitting: false,
+    treeshake: true,
+    external: ["react", "react-dom"],
+  },
+  {
+    name: "illustrations",
+    entry: { "illustrations/index": "src/illustrations/index.ts" },
+    format: ["esm", "cjs"],
+    dts: true,
+    sourcemap: true,
+    splitting: false,
+    treeshake: true,
+    external: ["react", "react-dom"],
+  },
+  {
+    name: "templates",
+    entry: { "templates/index": "src/templates/index.ts" },
+    format: ["esm", "cjs"],
+    dts: true,
+    sourcemap: true,
+    splitting: false,
+    treeshake: true,
+    external: ["react", "react-dom"],
+  },
+]);

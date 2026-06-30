@@ -1,0 +1,7 @@
+dist
+node_modules
+project
+chats
+src/icons/icon-data.ts
+src/illustrations
+package-lock.json
