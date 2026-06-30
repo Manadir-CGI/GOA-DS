@@ -1,0 +1,13 @@
+/* ============================================================
+   Government of Alberta Design System — global entry point
+   Consumers link THIS file (or `@goa/design-system/styles.css`).
+   It is import-only by contract.
+   ============================================================ */
+
+@import "./fonts.css";
+@import "./goa-tokens.css";
+@import "./base.css";
+
+/* Illustration library colour tokens — curated, un-prefixed --color-*
+   namespace, separate from the --goa-* system, consumed by src/illustrations/*. */
+@import "./illustration-tokens.css";

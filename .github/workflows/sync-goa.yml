@@ -1,0 +1,100 @@
+name: Sync GoA Design System
+
+# Keeps this recreation in step with upstream GoA. Tokens (the volatile layer)
+# auto-open a PR from the immutable npm artifact; component API drift is reported
+# as an artifact for human implementation.
+
+on:
+  schedule:
+    - cron: "0 12 * * 1" # weekly, Monday 12:00 UTC
+  workflow_dispatch: {} # run on demand from the Actions tab
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  tokens:
+    name: Tokens — @abgov/design-tokens (npm, pinned)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install latest published tokens
+        run: npm install --no-save @abgov/design-tokens@latest
+
+      - name: Resolve upstream version
+        id: ver
+        run: echo "version=$(node -p "require('@abgov/design-tokens/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      # diff-tokens exits 1 when there are changes; capture that without failing the job.
+      - name: Diff + apply tokens
+        id: diff
+        run: |
+          if node sync/diff-tokens.mjs \
+               src/styles/goa-tokens.css \
+               node_modules/@abgov/design-tokens/dist/tokens.css \
+               --apply --out "sync/reports/tokens-${{ steps.ver.outputs.version }}.md"; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Record pin
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          node -e "const f='sync/upstream.lock.json',fs=require('fs');const j=JSON.parse(fs.readFileSync(f));j.designTokens.version='${{ steps.ver.outputs.version }}';j.lastSynced=new Date().toISOString().slice(0,10);fs.writeFileSync(f,JSON.stringify(j,null,2)+'\n')"
+
+      - name: Open PR
+        if: steps.diff.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: sync/tokens
+          title: "chore(tokens): sync @abgov/design-tokens@${{ steps.ver.outputs.version }}"
+          commit-message: "chore(tokens): sync @abgov/design-tokens@${{ steps.ver.outputs.version }}"
+          body-path: "sync/reports/tokens-${{ steps.ver.outputs.version }}.md"
+          labels: design-system-sync
+          add-paths: |
+            src/styles/goa-tokens.css
+            sync/reports/*.md
+            sync/upstream.lock.json
+
+  components:
+    name: Components — GovAlta/ui-components (release tag)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Resolve latest ui-components release tag
+        id: tag
+        run: |
+          tag=$(curl -fsSL https://api.github.com/repos/GovAlta/ui-components/releases/latest \
+            | node -p "JSON.parse(require('fs').readFileSync(0,'utf8')).tag_name || 'main'")
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout ui-components @ tag
+        uses: actions/checkout@v4
+        with:
+          repository: GovAlta/ui-components
+          ref: ${{ steps.tag.outputs.tag }}
+          path: .upstream/ui-components
+
+      # Report only (component changes need a human to implement the props).
+      - name: Diff component APIs
+        run: |
+          node sync/diff-component-apis.mjs \
+            src/components \
+            .upstream/ui-components/docs/generated/component-apis \
+            --out "sync/reports/component-apis-${{ steps.tag.outputs.tag }}.md" || true
+
+      - name: Upload drift report
+        uses: actions/upload-artifact@v4
+        with:
+          name: component-api-diff
+          path: sync/reports/component-apis-*.md
